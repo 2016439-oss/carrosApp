@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+ 
+<head>
+  <meta charset="UTF-8">
+ 
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="CSS/autosCat.css">
+ 
+  <title>Carrusel de camisetas</title>
+
+</head>
+<body>
+ 
+  <h1>Catálogo de Autos Clásicos</h1>
+ 
+  <div class="carrusel-contenedor">
+ 
+    <button
+      type="button"
+      id="btn-anterior"
+      class="boton-carrusel boton-anterior">
+      &#10094;
+    </button>
+ 
+    <div class="carrusel-ventana">
+      <div id="carrusel" class="carrusel"></div>
+    </div>
+ 
+    <button
+      type="button"
+      id="btn-siguiente"
+      class="boton-carrusel boton-siguiente">
+      &#10095;
+    </button>
+ 
+  </div>
+ 
+  <div id="mensaje"></div>
+ 
+  <script>
+    const API_Autos = '/api/auto';
+ 
+    const carrusel = document.getElementById('carrusel');
+    const btnAnterior = document.getElementById('btn-anterior');
+    const btnSiguiente = document.getElementById('btn-siguiente');
+    const mensaje = document.getElementById('mensaje');
+ 
+    let camisetas = [];
+    let posicionActual = 0;
+ 
+ 
+    document.addEventListener('DOMContentLoaded', iniciarPagina);
+ 
+ 
+    async function iniciarPagina() {
+      const sesionValida = await verificarSesion();
+ 
+      if (!sesionValida) {
+        return;
+      }
+ 
+      btnAnterior.addEventListener('click', mostrarAnterior);
+      btnSiguiente.addEventListener('click', mostrarSiguiente);
+ 
+      window.addEventListener('resize', () => {
+        posicionActual = 0;
+        actualizarCarrusel();
+      });
+ 
+      await cargarAutos();
+    }
+ 
+ 
+    function obtenerToken() {
+      return localStorage.getItem('token');
+    }
+ 
+ 
+    function obtenerHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + obtenerToken()
+      };
+    }
+ 
+ 
+    async function verificarSesion() {
+      const token = obtenerToken();
+ 
+      if (!token) {
+        regresarAlLogin();
+        return false;
+      }
+ 
+      try {
+        const respuesta = await fetch('/api/verificatoken', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+ 
+        if (!respuesta.ok) {
+          regresarAlLogin();
+          return false;
+        }
+ 
+        return true;
+ 
+      } catch (error) {
+        console.error('Error verificando la sesión:', error);
+        regresarAlLogin();
+        return false;
+      }
+    }
+ 
+ 
+    function regresarAlLogin() {
+      localStorage.removeItem('token');
+      window.location.replace('login.html');
+    }
+ 
+ 
+    async function cargarAutos() {
+      try {
+        const respuesta = await fetch(API_Autos, {
+          method: 'GET',
+          headers: obtenerHeaders()
+        });
+ 
+        const datos = await procesarRespuesta(respuesta);
+ 
+        camisetas = datos;
+        posicionActual = 0;
+ 
+        mostrarAutos();
+ 
+      } catch (error) {
+        console.error(error);
+        mostrarMensaje(error.message, true);
+      }
+    }
+ 
+ 
+    async function procesarRespuesta(respuesta) {
+      if (respuesta.status === 401 || respuesta.status === 403) {
+        regresarAlLogin();
+        throw new Error('La sesión expiró');
+      }
+ 
+      let datos = {};
+ 
+      try {
+        datos = await respuesta.json();
+      } catch (error) {
+        datos = {};
+      }
+ 
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.error || 'No fue posible completar la operación'
+        );
+      }
+ 
+      return datos;
+    }
+ 
+ 
+    function mostrarAutos() {
+      carrusel.replaceChildren();
+ 
+      if (camisetas.length === 0) {
+        const aviso = document.createElement('div');
+ 
+        aviso.className = 'sin-autos';
+        aviso.textContent = 'No hay autos guardados.';
+ 
+        carrusel.appendChild(aviso);
+ 
+        btnAnterior.disabled = true;
+        btnSiguiente.disabled = true;
+ 
+        return;
+      }
+ 
+      camisetas.forEach((auto, indice) => {
+        const tarjeta = crearTarjetaCamiseta(auto, indice);
+        carrusel.appendChild(tarjeta);
+      });
+ 
+      actualizarCarrusel();
+    }
+ 
+    function crearTarjetaCamiseta(auto, indice) {
+      const tarjeta = document.createElement('article');
+      tarjeta.className = 'tarjeta-auto';
+ 
+      const titulo = document.createElement('h2');
+      titulo.className = 'titulo-auto';
+      titulo.textContent = 'Auto ' + (indice + 1);
+      tarjeta.appendChild(titulo);
+ 
+      return tarjeta;
+    }
+ 
+ 
+    function obtenerCantidadVisible() {
+      if (window.innerWidth <= 600) {
+        return 1;
+      }
+ 
+      if (window.innerWidth <= 850) {
+        return 2;
+      }
+ 
+      return 3;
+    }
+ 
+ 
+    function mostrarAnterior() {
+      if (posicionActual > 0) {
+        posicionActual--;
+        actualizarCarrusel();
+      }
+    }
+ 
+ 
+    function mostrarSiguiente() {
+      const cantidadVisible = obtenerCantidadVisible();
+      const posicionMaxima = Math.max(
+        camisetas.length - cantidadVisible,
+        0
+      );
+ 
+      if (posicionActual < posicionMaxima) {
+        posicionActual++;
+        actualizarCarrusel();
+      }
+    }
+ 
+ 
+    function actualizarCarrusel() {
+      if (camisetas.length === 0) {
+        return;
+      }
+ 
+      const cantidadVisible = obtenerCantidadVisible();
+      const posicionMaxima = Math.max(
+        camisetas.length - cantidadVisible,
+        0
+      );
+ 
+      if (posicionActual > posicionMaxima) {
+        posicionActual = posicionMaxima;
+      }
+ 
+      const primeraTarjeta = carrusel.querySelector(
+        '.tarjeta-auto'
+      );
+ 
+      if (!primeraTarjeta) {
+        return;
+      }
+ 
+      const anchoTarjeta =
+        primeraTarjeta.getBoundingClientRect().width;
+ 
+      const estilosCarrusel = window.getComputedStyle(carrusel);
+      const espacio = parseFloat(estilosCarrusel.gap) || 20;
+ 
+      const desplazamiento =
+        posicionActual * (anchoTarjeta + espacio);
+ 
+      carrusel.style.transform =
+        'translateX(-' + desplazamiento + 'px)';
+ 
+      btnAnterior.disabled = posicionActual === 0;
+ 
+      btnSiguiente.disabled =
+        posicionActual >= posicionMaxima;
+    }
+ 
+ 
+    function mostrarMensaje(texto, esError = false) {
+      mensaje.textContent = texto;
+ 
+      mensaje.className = esError
+        ? 'mensaje-error'
+        : 'mensaje-correcto';
+ 
+      setTimeout(() => {
+        mensaje.textContent = '';
+        mensaje.className = '';
+      }, 2500);
+    }
+  </script>
+ 
+</body>
+ 
+</html>

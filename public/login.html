@@ -1,0 +1,57 @@
+<html>
+ 
+<head></head>
+<body>
+ 
+<h1>Ingreso al sistema</h1>
+ 
+<div class="container">
+<h2>Escriba el email</h2>
+<input type="text" placeholder="Escriba el email" id = "email">
+ 
+<h2>
+    Escriba la clave
+</h2>
+<input type="password" placeholder="Escriba la clave" id = "clave">
+ 
+<input type="button" id ="btn-guardar" value="Ingresar">
+ 
+<a href="registro.html">Registrarse</a>
+
+</div>
+
+<script>
+const btnGuardar = document.getElementById('btn-guardar');
+btnGuardar.addEventListener('click', async () => {
+  // Obtener colores actuales de cada parte
+  const usuario = {
+    email: document.getElementById('email').value,
+    clave: document.getElementById('clave').value,
+  
+  };
+  // Enviar via fetch al servidor
+  const resp = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(usuario)
+  });
+  const data = await resp.json();
+  console.log('Respuesta:', data);
+  if (data.error != undefined)
+  {
+    alert(data.error)
+  }
+  else
+
+  alert("Bienvenido");
+  {
+  localStorage.setItem("token", data.token)
+  location.href="index.html"
+  }
+
+});
+</script>
+</body>
+</html>
