@@ -273,7 +273,7 @@
       titulo.textContent = (auto.marca && auto.modelo) ? `${auto.marca} ${auto.modelo}` : 'Auto ' + (indice + 1);
       tarjeta.appendChild(titulo);
  
-      if (auto.imagenUrl) {
+      if (auto.imagenUrl && auto.imagenUrl !== 'sin imagen') {
         const img = document.createElement('img');
         img.src = auto.imagenUrl; 
         img.className = 'imagen-auto'; 
