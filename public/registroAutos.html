@@ -66,7 +66,7 @@
         <h2>Modelo</h2>
         <input type="text" placeholder="Escriba el modelo" id="modelo">
         <br>
-        
+       
         <!-- Ajustado para guardar años numéricos y sincronizar con las décadas -->
         <h2>Año</h2>
         <select id="anio">
@@ -110,7 +110,7 @@
         <h2>Imagen</h2>
         <input type="file" accept="image/*" id="imagenUrl">
       </div>
-    
+   
       <div class="controles">
         <button type="button" id="btn-guardar">Guardar Auto Clásico</button>
         <button type="button" id="btn-limpiar">Reiniciar</button>
@@ -188,6 +188,9 @@
  
     function obtenerHeaders() {
       return {
+        // CAMBIO: antes solo se enviaba Authorization.
+        // Agregamos Content-Type porque ahora el frontend manda JSON.
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + obtenerToken()
       };
     }
@@ -246,30 +249,35 @@
       btnCancelar.addEventListener('click', () => reiniciarFormulario(true));
     }
  
-    function obtenerFormDataActual() {
-      const formData = new FormData();
-      
-      formData.append('marca', document.getElementById('marca').value);
-      formData.append('modelo', document.getElementById('modelo').value);
-      formData.append('anio', document.getElementById('anio').value);
-      formData.append('paisOrigen', document.getElementById('paisOrigen').value);
-      formData.append('tipoCarroceria', document.getElementById('tipoCarroceria').value);
-      formData.append('motor', document.getElementById('motor').value);
-      formData.append('color', document.getElementById('color').value);
-      formData.append('estadoConservacion', document.getElementById('estadoConservacion').value);
-      formData.append('valorEstimado', document.getElementById('valorEstimado').value);
-      
-     
-        formData.append('imagen', "sin imagen"); 
-      
+    function obtenerDatosAutoActual() {
+      // CAMBIO: antes esta función construía FormData.
+      // El backend no procesa multipart/form-data en este formulario,
+      // así que devolvemos un objeto JSON simple.
+      return {
+        marca: document.getElementById('marca').value,
+        modelo: document.getElementById('modelo').value,
+        anio: document.getElementById('anio').value,
+        paisOrigen: document.getElementById('paisOrigen').value,
+        tipoCarroceria: document.getElementById('tipoCarroceria').value,
+        motor: document.getElementById('motor').value,
+        color: document.getElementById('color').value,
+        estadoConservacion: document.getElementById('estadoConservacion').value,
+        valorEstimado: document.getElementById('valorEstimado').value,
 
-      return formData;
+        // CAMBIO: el input file sigue en pantalla,
+        // pero como el backend original no sube archivos,
+        // enviamos el mismo valor fijo que ya usaba la app.
+        imagenUrl: 'sin imagen'
+      };
     }
  
     async function guardarAuto() {
       try {
         btnGuardar.disabled = true;
-        const formData = obtenerFormDataActual();
+
+        // CAMBIO: antes se usaba FormData.
+        // Ahora usamos un objeto JSON para que Express lo reciba en req.body.
+        const auto = obtenerDatosAutoActual();
  
         let url = API_Autos;
         let metodo = 'POST';
@@ -281,8 +289,11 @@
  
         const respuesta = await fetch(url, {
           method: metodo,
-          headers: obtenerHeaders(), 
-          body: formData 
+          headers: obtenerHeaders(),
+
+          // CAMBIO: antes se enviaba body: formData
+          // Ahora serializamos a JSON.
+          body: JSON.stringify(auto)
         });
  
         await procesarRespuesta(respuesta);
@@ -340,7 +351,7 @@
         fila.appendChild(crearCelda(auto.estadoConservacion));
         fila.appendChild(crearCelda('$' + auto.valorEstimado));
 
-    
+   
         fila.appendChild((crearCelda("sin imagen")));
  
         const celdaAcciones = document.createElement('td');
@@ -363,6 +374,7 @@
         listaAutos.appendChild(fila);
       });
     }
+
     function editarAutos(auto) {
       autoEditandoId = auto._id;
       document.getElementById('marca').value = auto.marca;
@@ -381,6 +393,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
       mostrarMensaje('Puede modificar las propiedades. Deje la imagen vacía para mantener la anterior.');
     }
+
     async function eliminarAutos(id) {
       const confirmar = window.confirm('¿Está seguro de que desea eliminar este auto?');
       if (!confirmar) return;
@@ -400,6 +413,7 @@
         mostrarMensaje(error.message, true);
       }
     }
+
     function reiniciarFormulario(limpiarMensajeActual = true) {
       document.getElementById('marca').selectedIndex = 0;
       document.getElementById('modelo').value = '';
@@ -419,10 +433,12 @@
         limpiarMensaje();
       }
     }
+
     function mostrarMensaje(texto, esError = false) {
       mensaje.textContent = texto;
       mensaje.className = esError ? 'mensaje-error' : 'mensaje-correcto';
     }
+
     function limpiarMensaje() {
       mensaje.textContent = '';
       mensaje.className = '';
