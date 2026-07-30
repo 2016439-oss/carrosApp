@@ -249,11 +249,26 @@
       btnCancelar.addEventListener('click', () => reiniciarFormulario(true));
     }
  
-    function obtenerDatosAutoActual() {
-      // CAMBIO: antes esta función construía FormData.
-      // El backend no procesa multipart/form-data en este formulario,
-      // así que devolvemos un objeto JSON simple.
-      return {
+    // Convierte el archivo seleccionado en el input a una imagen en base64
+    // (data URL) que se puede guardar directamente como texto en MongoDB.
+    function leerImagenComoBase64(inputFile) {
+      return new Promise((resolve, reject) => {
+        if (!inputFile.files || !inputFile.files[0]) {
+          resolve(null); // no se seleccionó ninguna imagen nueva
+          return;
+        }
+        const lector = new FileReader();
+        lector.onload = () => resolve(lector.result); // data:image/png;base64,...
+        lector.onerror = () => reject(new Error('No se pudo leer la imagen seleccionada'));
+        lector.readAsDataURL(inputFile.files[0]);
+      });
+    }
+
+    async function obtenerDatosAutoActual() {
+      const inputImagen = document.getElementById('imagenUrl');
+      const imagenNueva = await leerImagenComoBase64(inputImagen);
+
+      const auto = {
         marca: document.getElementById('marca').value,
         modelo: document.getElementById('modelo').value,
         anio: document.getElementById('anio').value,
@@ -263,21 +278,27 @@
         color: document.getElementById('color').value,
         estadoConservacion: document.getElementById('estadoConservacion').value,
         valorEstimado: document.getElementById('valorEstimado').value,
-
-        // CAMBIO: el input file sigue en pantalla,
-        // pero como el backend original no sube archivos,
-        // enviamos el mismo valor fijo que ya usaba la app.
-        imagenUrl: 'sin imagen'
       };
+
+      if (imagenNueva) {
+        // Se seleccionó una imagen nueva: se guarda en base64.
+        auto.imagenUrl = imagenNueva;
+      } else if (!autoEditandoId) {
+        // Es un auto nuevo y no se eligió imagen.
+        auto.imagenUrl = 'sin imagen';
+      }
+      // Si se está editando y no se eligió imagen nueva, no se manda
+      // imagenUrl y así el backend conserva la imagen que ya tenía.
+
+      return auto;
     }
  
     async function guardarAuto() {
       try {
         btnGuardar.disabled = true;
 
-        // CAMBIO: antes se usaba FormData.
-        // Ahora usamos un objeto JSON para que Express lo reciba en req.body.
-        const auto = obtenerDatosAutoActual();
+        // CAMBIO: ahora obtenerDatosAutoActual es async porque lee el archivo.
+        const auto = await obtenerDatosAutoActual();
  
         let url = API_Autos;
         let metodo = 'POST';
@@ -351,8 +372,19 @@
         fila.appendChild(crearCelda(auto.estadoConservacion));
         fila.appendChild(crearCelda('$' + auto.valorEstimado));
 
-   
-        fila.appendChild((crearCelda("sin imagen")));
+
+        const celdaImagen = document.createElement('td');
+        if (auto.imagenUrl && auto.imagenUrl !== 'sin imagen') {
+          const miniatura = document.createElement('img');
+          miniatura.src = auto.imagenUrl;
+          miniatura.alt = auto.modelo || 'auto';
+          miniatura.style.width = '60px';
+          miniatura.style.height = 'auto';
+          celdaImagen.appendChild(miniatura);
+        } else {
+          celdaImagen.textContent = 'Sin imagen';
+        }
+        fila.appendChild(celdaImagen);
  
         const celdaAcciones = document.createElement('td');
         const contenedorAcciones = document.createElement('div');
