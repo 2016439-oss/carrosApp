@@ -15,6 +15,27 @@
 <body>
  
   <h1>Catálogo de Autos Clásicos</h1>
+
+  <!-- Contenedor de Filtros -->
+  <div class="filtros-contenedor">
+    <input 
+      type="text" 
+      id="buscar-texto" 
+      class="filtro-input" 
+      placeholder="Buscar por marca o modelo...">
+    
+    <select id="filtrar-decada" class="filtro-select">
+      <option value="">Todas las décadas</option>
+      <option value="1920">Años 20s</option>
+      <option value="1930">Años 30s</option>
+      <option value="1940">Años 40s</option>
+      <option value="1950">Años 50s</option>
+      <option value="1960">Años 60s</option>
+      <option value="1970">Años 70s</option>
+      <option value="1980">Años 80s</option>
+      <option value="1990">Años 90s</option>
+    </select>
+  </div>
  
   <div class="carrusel-contenedor">
  
@@ -22,7 +43,7 @@
       type="button"
       id="btn-anterior"
       class="boton-carrusel boton-anterior">
-      &#10094;
+      ❮
     </button>
  
     <div class="carrusel-ventana">
@@ -33,7 +54,7 @@
       type="button"
       id="btn-siguiente"
       class="boton-carrusel boton-siguiente">
-      &#10095;
+      ❯
     </button>
  
   </div>
@@ -47,13 +68,15 @@
     const btnAnterior = document.getElementById('btn-anterior');
     const btnSiguiente = document.getElementById('btn-siguiente');
     const mensaje = document.getElementById('mensaje');
+    
+    const buscarTexto = document.getElementById('buscar-texto');
+    const filtrarDecada = document.getElementById('filtrar-decada');
  
-    let camisetas = [];
+    let autos = [];          
+    let autosFiltrados = []; 
     let posicionActual = 0;
  
- 
     document.addEventListener('DOMContentLoaded', iniciarPagina);
- 
  
     async function iniciarPagina() {
       const sesionValida = await verificarSesion();
@@ -64,6 +87,9 @@
  
       btnAnterior.addEventListener('click', mostrarAnterior);
       btnSiguiente.addEventListener('click', mostrarSiguiente);
+      
+      buscarTexto.addEventListener('input', aplicarFiltros);
+      filtrarDecada.addEventListener('change', aplicarFiltros);
  
       window.addEventListener('resize', () => {
         posicionActual = 0;
@@ -73,11 +99,9 @@
       await cargarAutos();
     }
  
- 
     function obtenerToken() {
       return localStorage.getItem('token');
     }
- 
  
     function obtenerHeaders() {
       return {
@@ -85,7 +109,6 @@
         'Authorization': 'Bearer ' + obtenerToken()
       };
     }
- 
  
     async function verificarSesion() {
       const token = obtenerToken();
@@ -117,12 +140,10 @@
       }
     }
  
- 
     function regresarAlLogin() {
       localStorage.removeItem('token');
       window.location.replace('login.html');
     }
- 
  
     async function cargarAutos() {
       try {
@@ -133,7 +154,8 @@
  
         const datos = await procesarRespuesta(respuesta);
  
-        camisetas = datos;
+        autos = datos;
+        autosFiltrados = [...autos]; 
         posicionActual = 0;
  
         mostrarAutos();
@@ -143,7 +165,6 @@
         mostrarMensaje(error.message, true);
       }
     }
- 
  
     async function procesarRespuesta(respuesta) {
       if (respuesta.status === 401 || respuesta.status === 403) {
@@ -167,58 +188,83 @@
  
       return datos;
     }
- 
+
+    function aplicarFiltros() {
+      const texto = buscarTexto.value.toLowerCase().trim();
+      const decadaSeleccionada = filtrarDecada.value;
+
+      autosFiltrados = autos.filter(auto => {
+        const coincideMarca = auto.marca ? auto.marca.toLowerCase().includes(texto) : false;
+        const coincideModelo = auto.modelo ? auto.modelo.toLowerCase().includes(texto) : false;
+        const pasaTexto = texto === '' || coincideMarca || coincideModelo;
+
+        let pasaDecada = true;
+        if (decadaSeleccionada !== '') {
+          const anioInicio = parseInt(decadaSeleccionada);
+          const anioFin = anioInicio + 9;
+          const anioAuto = parseInt(auto.anio); 
+          pasaDecada = (anioAuto >= anioInicio && anioAuto <= anioFin);
+        }
+
+        return pasaTexto && pasaDecada;
+      });
+
+      posicionActual = 0; 
+      mostrarAutos();
+    }
  
     function mostrarAutos() {
       carrusel.replaceChildren();
  
-      if (camisetas.length === 0) {
+      if (autosFiltrados.length === 0) {
         const aviso = document.createElement('div');
- 
         aviso.className = 'sin-autos';
-        aviso.textContent = 'No hay autos guardados.';
- 
+        aviso.textContent = 'No hay autos que coincidan con la búsqueda.';
         carrusel.appendChild(aviso);
  
         btnAnterior.disabled = true;
         btnSiguiente.disabled = true;
- 
         return;
       }
  
-      camisetas.forEach((auto, indice) => {
-        const tarjeta = crearTarjetaCamiseta(auto, indice);
+      autosFiltrados.forEach((auto, indice) => {
+        const tarjeta = crearTarjetaAuto(auto, indice);
         carrusel.appendChild(tarjeta);
       });
  
       actualizarCarrusel();
     }
  
-    function crearTarjetaCamiseta(auto, indice) {
+    function crearTarjetaAuto(auto, indice) {
       const tarjeta = document.createElement('article');
       tarjeta.className = 'tarjeta-auto';
  
       const titulo = document.createElement('h2');
       titulo.className = 'titulo-auto';
-      titulo.textContent = 'Auto ' + (indice + 1);
+      titulo.textContent = (auto.marca && auto.modelo) ? `${auto.marca} ${auto.modelo}` : 'Auto ' + (indice + 1);
       tarjeta.appendChild(titulo);
+ 
+      if (auto.imagenUrl) {
+        const img = document.createElement('img');
+        img.src = auto.imagenUrl; 
+        img.className = 'imagen-auto'; 
+        img.alt = `${auto.marca || 'Auto'} ${auto.modelo || ''}`;
+        tarjeta.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'sin-imagen-placeholder';
+        placeholder.textContent = 'Sin Imagen';
+        tarjeta.appendChild(placeholder);
+      }
  
       return tarjeta;
     }
  
- 
     function obtenerCantidadVisible() {
-      if (window.innerWidth <= 600) {
-        return 1;
-      }
- 
-      if (window.innerWidth <= 850) {
-        return 2;
-      }
- 
+      if (window.innerWidth <= 600) return 1;
+      if (window.innerWidth <= 850) return 2;
       return 3;
     }
- 
  
     function mostrarAnterior() {
       if (posicionActual > 0) {
@@ -227,13 +273,9 @@
       }
     }
  
- 
     function mostrarSiguiente() {
       const cantidadVisible = obtenerCantidadVisible();
-      const posicionMaxima = Math.max(
-        camisetas.length - cantidadVisible,
-        0
-      );
+      const posicionMaxima = Math.max(autosFiltrados.length - cantidadVisible, 0);
  
       if (posicionActual < posicionMaxima) {
         posicionActual++;
@@ -241,55 +283,33 @@
       }
     }
  
- 
     function actualizarCarrusel() {
-      if (camisetas.length === 0) {
-        return;
-      }
+      if (autosFiltrados.length === 0) return;
  
       const cantidadVisible = obtenerCantidadVisible();
-      const posicionMaxima = Math.max(
-        camisetas.length - cantidadVisible,
-        0
-      );
+      const posicionMaxima = Math.max(autosFiltrados.length - cantidadVisible, 0);
  
       if (posicionActual > posicionMaxima) {
         posicionActual = posicionMaxima;
       }
  
-      const primeraTarjeta = carrusel.querySelector(
-        '.tarjeta-auto'
-      );
+      const primeraTarjeta = carrusel.querySelector('.tarjeta-auto');
+      if (!primeraTarjeta) return;
  
-      if (!primeraTarjeta) {
-        return;
-      }
- 
-      const anchoTarjeta =
-        primeraTarjeta.getBoundingClientRect().width;
- 
+      const anchoTarjeta = primeraTarjeta.getBoundingClientRect().width;
       const estilosCarrusel = window.getComputedStyle(carrusel);
       const espacio = parseFloat(estilosCarrusel.gap) || 20;
  
-      const desplazamiento =
-        posicionActual * (anchoTarjeta + espacio);
- 
-      carrusel.style.transform =
-        'translateX(-' + desplazamiento + 'px)';
+      const desplazamiento = posicionActual * (anchoTarjeta + espacio);
+      carrusel.style.transform = 'translateX(-' + desplazamiento + 'px)';
  
       btnAnterior.disabled = posicionActual === 0;
- 
-      btnSiguiente.disabled =
-        posicionActual >= posicionMaxima;
+      btnSiguiente.disabled = posicionActual >= posicionMaxima;
     }
- 
  
     function mostrarMensaje(texto, esError = false) {
       mensaje.textContent = texto;
- 
-      mensaje.className = esError
-        ? 'mensaje-error'
-        : 'mensaje-correcto';
+      mensaje.className = esError ? 'mensaje-error' : 'mensaje-correcto';
  
       setTimeout(() => {
         mensaje.textContent = '';

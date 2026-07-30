@@ -51,7 +51,7 @@ function verificarToken(req, res, next) {
 
   try {
 
-    const decoded = jwt.verify(token, 'SECRETO_SUPER_SEGUR0');    // Verifica y decodifica el token
+    const decoded = jwt.verify(token, process.env.SECRETO);    // Verifica y decodifica el token
 
     console.log(decoded)
 
@@ -129,7 +129,7 @@ app.post('/api/login', async (req, res) => {
     }
     // 3. Credenciales válidas: Generar token JWT
     const datosToken = { id: usuario._id };            // Podemos incluir datos en el token (p.ej. el ID de usuario)
-    const secreto = 'SECRETO_SUPER_SEGUR0';            // Clave secreta para firmar el token (en producción, mantener en una variable de entorno)
+    const secreto = process.env.SECRETO;            // Clave secreta para firmar el token (en producción, mantener en una variable de entorno)
     const opciones = { expiresIn: '1h' };              // El token expirará en 1 hora
     const token = jwt.sign(datosToken, secreto, opciones);
 

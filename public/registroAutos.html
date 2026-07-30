@@ -26,40 +26,43 @@
         Está editando un auto clásico guardado.
       </p>
 
-    <div class="container">
+      <div class="container">
         <h2>Marca</h2>
-        <select  placeholder="Escriba la marca" id = marca>
+        <select id="marca">
             <option value="BMW">BMW</option>
             <option value="Ferrari">Ferrari</option>
             <option value="Toyota">Toyota</option>
         </select>
         <br>
         <h2>Modelo</h2>
-        <input type="text" placeholder="Escriba el modelo" id = modelo>
+        <input type="text" placeholder="Escriba el modelo" id="modelo">
         <br>
+        
+        <!-- Ajustado para guardar años numéricos y sincronizar con las décadas -->
         <h2>Año</h2>
-        <select  placeholder="Escriba el año" id = anio>
-            <option value="1920-1930">1920-1930</option>
-            <option value="1930-1940">1930-1940</option>
-            <option value="1940-1950">1940-1950</option>
-            <option value="1950-1960">1950-1960</option>
-            <option value="1960-1970">1960-1970</option>
-            <option value="1970-1980">1970-1980</option>
-            <option value="1980-1990">1980-1990</option>
+        <select id="anio">
+            <option value="1925">1925 (Años 20s)</option>
+            <option value="1935">1935 (Años 30s)</option>
+            <option value="1945">1945 (Años 40s)</option>
+            <option value="1955">1955 (Años 50s)</option>
+            <option value="1965">1965 (Años 60s)</option>
+            <option value="1975">1975 (Años 70s)</option>
+            <option value="1985">1985 (Años 80s)</option>
+            <option value="1995">1995 (Años 90s)</option>
         </select>
         <br>
         <h2>País de Origen</h2>
-        <input type="text" placeholder="Escriba el país de origen" id = paisOrigen>
+        <input type="text" placeholder="Escriba el país de origen" id="paisOrigen">
         <br>
         <h2>Tipo de Carroceria</h2>
-        <select  placeholder="Escriba la carroceria" id = tipoCarroceria>
+        <select id="tipoCarroceria">
             <option value="Sedán">Sedán</option>
             <option value="Hatchback">Hatchback</option>
             <option value="SUV">SUV</option>
         </select>
         <br>
         <h2>Motor</h2>
-        <select  placeholder="Escriba el motor" id = motor>
+        <select id="motor">
             <option value="V6">V6</option>
             <option value="V8">V8</option>
             <option value="Turbo">Turbo</option>
@@ -67,32 +70,22 @@
         </select>
         <br>
         <h2>Color</h2>
-        <input type="text" placeholder="Escriba el color" id = color>
+        <input type="text" placeholder="Escriba el color" id="color">
         <br>
         <h2>Estado de Conservacion</h2>
-        <input type="range" id = estadoConservacion min="1" max="100">
+        <input type="range" id="estadoConservacion" min="1" max="100">
         <br>
         <h2>Valor Estimado</h2>
-        <input type="number" placeholder="Escriba el valor estimado" id = valorEstimado>
+        <input type="number" placeholder="Escriba el valor estimado" id="valorEstimado">
         <br>
         <h2>Imagen</h2>
-        <input type="file" accept="image/*" id = imagenUrl>
-    </div>
+        <input type="file" accept="image/*" id="imagenUrl">
+      </div>
     
- <div class="controles">
- 
-        <button type="button" id="btn-guardar">
-          Guardar diseño
-        </button>
- 
-        <button type="button" id="btn-limpiar">
-          Reiniciar 
-        </button>
- 
-        <button type="button" id="btn-cancelar" class="oculto">
-          Cancelar edición
-        </button>
- 
+      <div class="controles">
+        <button type="button" id="btn-guardar">Guardar Auto Clásico</button>
+        <button type="button" id="btn-limpiar">Reiniciar</button>
+        <button type="button" id="btn-cancelar" class="oculto">Cancelar edición</button>
       </div>
  
       <div id="mensaje"></div>
@@ -101,12 +94,10 @@
  
     <section class="panel">
  
-      <h2>Mis Autos guardadas</h2>
+      <h2>Mis Autos guardados</h2>
  
       <div class="tabla-contenedor">
- 
         <table id="tabla-autos">
- 
           <thead>
             <tr>
               <th>Marca</th>
@@ -116,20 +107,16 @@
               <th>Tipo de Carrocería</th>
               <th>Motor</th>
               <th>Color</th>
-              <th>Estado de Concervación</th>
+              <th>Estado de Conservación</th>
               <th>Valor Estimado</th>
               <th>Imagen</th>
+              <th>Acciones</th>
             </tr>
           </thead>
- 
           <tbody id="lista-autos"></tbody>
- 
         </table>
  
-        <p id="sin-autos" class="oculto">
-          No tiene autos guardados.
-        </p>
- 
+        <p id="sin-autos" class="oculto">No tiene autos guardados.</p>
       </div>
  
     </section>
@@ -137,7 +124,7 @@
   </main>
  
   <script>
-    const API_Autos= '/api/auto';
+    const API_Autos = '/api/auto';
  
     const btnGuardar = document.getElementById('btn-guardar');
     const btnLimpiar = document.getElementById('btn-limpiar');
@@ -150,22 +137,17 @@
  
     let autoEditandoId = null;
  
- 
     document.addEventListener('DOMContentLoaded', iniciarPagina);
- 
  
     async function iniciarPagina() {
       const sesionValida = await verificarSesion();
- 
-      if (!sesionValida) {
-        return;
-      }
+      if (!sesionValida) return;
  
       configurarEventos();
       await cargarAutos();
     }
  
-     function crearCelda(texto) {
+    function crearCelda(texto) {
       const td = document.createElement('td');
       td.textContent = texto || '-';
       return td;
@@ -175,18 +157,14 @@
       return localStorage.getItem('token');
     }
  
- 
     function obtenerHeaders() {
       return {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + obtenerToken()
       };
     }
  
- 
     async function verificarSesion() {
       const token = obtenerToken();
- 
       if (!token) {
         regresarAlLogin();
         return false;
@@ -195,31 +173,24 @@
       try {
         const respuesta = await fetch('/api/verificatoken', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token
-          }
+          headers: { 'Authorization': 'Bearer ' + token }
         });
- 
         if (!respuesta.ok) {
           regresarAlLogin();
           return false;
         }
- 
         return true;
- 
       } catch (error) {
-        console.error('Error verificando la sesión:', error);
+        console.error('Error verifying session:', error);
         regresarAlLogin();
         return false;
       }
     }
  
- 
     function regresarAlLogin() {
       localStorage.removeItem('token');
       window.location.replace('login.html');
     }
- 
  
     async function procesarRespuesta(respuesta) {
       if (respuesta.status === 401 || respuesta.status === 403) {
@@ -228,7 +199,6 @@
       }
  
       let datos = {};
- 
       try {
         datos = await respuesta.json();
       } catch (error) {
@@ -236,43 +206,42 @@
       }
  
       if (!respuesta.ok) {
-        throw new Error(
-          datos.error || 'No fue posible completar la operación'
-        );
+        throw new Error(datos.error || 'No fue posible completar la operación');
       }
- 
       return datos;
     }
  
- 
     function configurarEventos() {
       btnGuardar.addEventListener('click', guardarAuto);
-      btnLimpiar.addEventListener('click', reiniciarFormulario);
-      btnCancelar.addEventListener('click', reiniciarFormulario);
+      btnLimpiar.addEventListener('click', () => reiniciarFormulario(true));
+      btnCancelar.addEventListener('click', () => reiniciarFormulario(true));
     }
  
- 
-    function obtenerDiseñoActual() {
-      return {
-        marca: document.getElementById('marca').value,
-        modelo: document.getElementById('modelo').value,
-        año: document.getElementById('anio').value,
-        paisOrigen: document.getElementById('paisOrigen').value,
-        tipoCarroceria: document.getElementById('tipoCarroceria').value,
-        motor: document.getElementById('motor').value,
-        color: document.getElementById('color').value,
-        estadoConservacion: document.getElementById('estadoConservacion').value,
-        valorEstimado: document.getElementById('valorEstimado').value,
-        imagenUrl: document.getElementById('imagenUrl').value
-      };
+    function obtenerFormDataActual() {
+      const formData = new FormData();
+      
+      formData.append('marca', document.getElementById('marca').value);
+      formData.append('modelo', document.getElementById('modelo').value);
+      formData.append('anio', document.getElementById('anio').value);
+      formData.append('paisOrigen', document.getElementById('paisOrigen').value);
+      formData.append('tipoCarroceria', document.getElementById('tipoCarroceria').value);
+      formData.append('motor', document.getElementById('motor').value);
+      formData.append('color', document.getElementById('color').value);
+      formData.append('estadoConservacion', document.getElementById('estadoConservacion').value);
+      formData.append('valorEstimado', document.getElementById('valorEstimado').value);
+      
+      const inputImagen = document.getElementById('imagenUrl');
+      if (inputImagen.files.length > 0) {
+        formData.append('imagen', inputImagen.files[0]); 
+      }
+
+      return formData;
     }
- 
  
     async function guardarAuto() {
       try {
         btnGuardar.disabled = true;
- 
-        const diseño = obtenerDiseñoActual();
+        const formData = obtenerFormDataActual();
  
         let url = API_Autos;
         let metodo = 'POST';
@@ -284,41 +253,32 @@
  
         const respuesta = await fetch(url, {
           method: metodo,
-          headers: obtenerHeaders(),
-          body: JSON.stringify(diseño)
+          headers: obtenerHeaders(), 
+          body: formData 
         });
  
         await procesarRespuesta(respuesta);
  
-        mostrarMensaje(
-          autoEditandoId
-            ? 'Auto actualizado correctamente.'
-            : 'Auto guardado correctamente.'
-          
-        );
- 
-        reiniciarFormulario(false);
+        mostrarMensaje(autoEditandoId ? 'Auto actualizado correctamente.' : 'Auto guardado correctamente.');
+        reiniciarFormulario(true);
         await cargarAutos();
  
       } catch (error) {
         console.error(error);
         mostrarMensaje(error.message, true);
- 
       } finally {
         btnGuardar.disabled = false;
       }
     }
- 
- 
+
     async function cargarAutos() {
       try {
         const respuesta = await fetch(API_Autos, {
           method: 'GET',
-          headers: obtenerHeaders()
+          headers: { 'Authorization': 'Bearer ' + obtenerToken() }
         });
  
         const autos = await procesarRespuesta(respuesta);
- 
         mostrarAutos(autos);
  
       } catch (error) {
@@ -327,9 +287,7 @@
       }
     }
  
- 
     function mostrarAutos(autos) {
-      console.log(autos);
       listaAutos.replaceChildren();
  
       if (!autos || autos.length === 0) {
@@ -345,168 +303,115 @@
         const fila = document.createElement('tr');
  
         fila.appendChild(crearCelda(auto.marca));
-
         fila.appendChild(crearCelda(auto.modelo));
-
         fila.appendChild(crearCelda(auto.anio));
-
         fila.appendChild(crearCelda(auto.paisOrigen));
-
         fila.appendChild(crearCelda(auto.tipoCarroceria));
-
         fila.appendChild(crearCelda(auto.motor));
-
         fila.appendChild(crearCelda(auto.color));
-
         fila.appendChild(crearCelda(auto.estadoConservacion));
+        fila.appendChild(crearCelda('$' + auto.valorEstimado));
 
-        fila.appendChild(crearCelda(auto.valorEstimado));
-
-        fila.appendChild(crearCelda(auto.imagenUrl));
- 
+        const celdaImagen = document.createElement('td');
+        if (auto.imagenUrl) {
+          const img = document.createElement('img');
+          img.src = auto.imagenUrl;
+          img.alt = auto.modelo;
+          img.style.width = '60px';
+          img.style.height = 'auto';
+          img.style.borderRadius = '4px';
+          celdaImagen.appendChild(img);
+        } else {
+          celdaImagen.textContent = 'Sin foto';
+        }
+        fila.appendChild(celdaImagen);
  
         const celdaAcciones = document.createElement('td');
         const contenedorAcciones = document.createElement('div');
         contenedorAcciones.className = 'acciones';
- 
- 
         const btnEditar = document.createElement('button');
         btnEditar.type = 'button';
         btnEditar.className = 'btn-editar';
         btnEditar.textContent = 'Editar';
         btnEditar.addEventListener('click', () => editarAutos(auto));
- 
         const btnEliminar = document.createElement('button');
         btnEliminar.type = 'button';
         btnEliminar.className = 'btn-eliminar';
         btnEliminar.textContent = 'Eliminar';
         btnEliminar.addEventListener('click', () => eliminarAutos(auto._id));
- 
         contenedorAcciones.appendChild(btnEditar);
         contenedorAcciones.appendChild(btnEliminar);
         celdaAcciones.appendChild(contenedorAcciones);
         fila.appendChild(celdaAcciones);
- 
         listaAutos.appendChild(fila);
       });
     }
-
- 
- 
- 
     function editarAutos(auto) {
       autoEditandoId = auto._id;
- 
-       document.getElementById('marca').value = auto.marca ;
-
+      document.getElementById('marca').value = auto.marca;
       document.getElementById('modelo').value = auto.modelo;
-
-      document.getElementById('anio').value = auto.anio ;
-
-      document.getElementById('paisOrigen').value = auto.paisOrigen ;
-
-      document.getElementById('tipoCarroceria').value = auto.tipoCarroceria ;
-
-      document.getElementById('motor').value = auto.motor ;
-
+      document.getElementById('anio').value = auto.anio;
+      document.getElementById('paisOrigen').value = auto.paisOrigen;
+      document.getElementById('tipoCarroceria').value = auto.tipoCarroceria;
+      document.getElementById('motor').value = auto.motor;
       document.getElementById('color').value = auto.color;
-
-      document.getElementById('estadoConservacion').value = auto.estadoConservacion ;
-
+      document.getElementById('estadoConservacion').value = auto.estadoConservacion;
       document.getElementById('valorEstimado').value = auto.valorEstimado;
-
-      document.getElementById('imagenUrl').value = auto.imagenUrl;
-
-
- 
+      document.getElementById('imagenUrl').value = '';
       btnGuardar.textContent = 'Actualizar auto';
       btnCancelar.classList.remove('oculto');
       modoEdicion.classList.remove('oculto');
- 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
- 
-      mostrarMensaje('Puede modificar las propiedades del auto.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      mostrarMensaje('Puede modificar las propiedades. Deje la imagen vacía para mantener la anterior.');
     }
- 
- 
     async function eliminarAutos(id) {
-      const confirmar = window.confirm(
-        '¿Está seguro de que desea eliminar este auto?'
-      );
- 
-      if (!confirmar) {
-        return;
-      }
- 
+      const confirmar = window.confirm('¿Está seguro de que desea eliminar este auto?');
+      if (!confirmar) return;
       try {
-        const respuesta = await fetch(
-          API_Autos + '/' + id,
-          {
-            method: 'DELETE',
-            headers: obtenerHeaders()
-          }
-        );
- 
+        const respuesta = await fetch(API_Autos + '/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + obtenerToken() }
+        });
         const resultado = await procesarRespuesta(respuesta);
- 
         if (autoEditandoId === id) {
           reiniciarFormulario(false);
         }
- 
-        mostrarMensaje(
-          resultado.mensaje || 'Auto eliminado correctamente.'
-        );
- 
+        mostrarMensaje(resultado.mensaje || 'Auto eliminado correctamente.');
         await cargarAutos();
- 
       } catch (error) {
         console.error(error);
         mostrarMensaje(error.message, true);
       }
     }
- 
- 
     function reiniciarFormulario(limpiarMensajeActual = true) {
-      document.getElementById('marca').value = 'BMW';
+      document.getElementById('marca').selectedIndex = 0;
       document.getElementById('modelo').value = '';
-      document.getElementById('anio').value = '1920-1930'; 
+      document.getElementById('anio').selectedIndex = 0;
       document.getElementById('paisOrigen').value = '';
-      document.getElementById('tipoCarroceria').value = 'Sedán'; 
-      document.getElementById('motor').value = 'V6';
+      document.getElementById('tipoCarroceria').selectedIndex = 0;
+      document.getElementById('motor').selectedIndex = 0;
       document.getElementById('color').value = '';
-      document.getElementById('estadoConservacion').value = '50'; 
+      document.getElementById('estadoConservacion').value = '50';
       document.getElementById('valorEstimado').value = '';
- 
-      const inputImagen = document.getElementById('imagenUrl');
-      if (inputImagen) inputImagen.value = '';
-
+      document.getElementById('imagenUrl').value = '';
       autoEditandoId = null;
       btnGuardar.textContent = 'Guardar Auto Clásico';
       btnCancelar.classList.add('oculto');
       modoEdicion.classList.add('oculto');
- 
       if (limpiarMensajeActual) {
         limpiarMensaje();
       }
     }
- 
     function mostrarMensaje(texto, esError = false) {
       mensaje.textContent = texto;
- 
-      mensaje.className = esError
-        ? 'mensaje-error'
-        : 'mensaje-correcto';
+      mensaje.className = esError ? 'mensaje-error' : 'mensaje-correcto';
     }
- 
- 
     function limpiarMensaje() {
       mensaje.textContent = '';
       mensaje.className = '';
     }
-  </script>
+
+    </script>
  
 </body>
  

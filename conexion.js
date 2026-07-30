@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-
-const uri = 'mongodb://localhost:27017';
+import dotenv from 'dotenv';
+dotenv.config();
+const uri = process.env.MONGO;
 
 //const uri = 'mongodb+srv://Val:97801941_Vb@cluster0.dennbyw.mongodb.net/?appName=Cluster0';
 
