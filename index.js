@@ -88,7 +88,7 @@ app.post('/api/registro', async (req, res) => {
     res.status(201).json({ mensaje: 'Usuario registrado con éxito', id: nuevoUsuario._id });
 
   } catch (error) {
-
+console.log(error);
     res.status(400).json({ error: 'No se pudo registrar el usuario' });
 
   }
@@ -139,6 +139,7 @@ app.post('/api/login', async (req, res) => {
     res.json({ token });
   } catch (error) {
     res.status(500).json({ error: 'Error en el servidor' });
+    console.log(error);
 
   }
 
