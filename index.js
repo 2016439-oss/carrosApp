@@ -3,7 +3,7 @@ const app = express();
 
 // Middleware para parsear JSON en las peticiones (body-parser integrado)
 app.use(express.json());
-const Usuario = require("./usuario_esquema.js");
+const Usuario = require("./usuario_esquema");
 const conectarBD = require("./conexion");
 const path = require('path');
 const bcrypt = require('bcryptjs'); 
@@ -51,7 +51,7 @@ function verificarToken(req, res, next) {
 
   try {
 
-    const decoded = jwt.verify(token, process.env.SECRETO);    // Verifica y decodifica el token
+    const decoded = jwt.verify(token, 'SECRETO_SUPER_SEGUR0');    // Verifica y decodifica el token
 
     console.log(decoded)
 
@@ -73,22 +73,32 @@ app.post('/api/registro', async (req, res) => {
 
   try {
 
-    const { nombre, correo, clave } = req.body;
+    const { nombre, email, clave } = req.body;
+
+    
 
     // 1. Generar un salt (semilla aleatoria) para el hash
+
     const salt = await bcrypt.genSalt(10);                  // 10 rondas de generación de salt
 
     // 2. Hashear la contraseña proporcionada usando el salt generado
+
     const hash = await bcrypt.hash(clave, salt);
 
+    
+
     // 3. Crear y guardar el nuevo usuario con la contraseña hasheada
-    const nuevoUsuario = new Usuario({ nombre, correo, clave: hash });
+
+    const nuevoUsuario = new Usuario({ nombre, email, clave: hash });
 
     await nuevoUsuario.save();
+
+    
+
     res.status(201).json({ mensaje: 'Usuario registrado con éxito', id: nuevoUsuario._id });
 
   } catch (error) {
-console.log(error);
+
     res.status(400).json({ error: 'No se pudo registrar el usuario' });
 
   }
@@ -96,7 +106,7 @@ console.log(error);
 });
 const jwt = require('jsonwebtoken');
 
- //
+ 
 
 // Login de usuario (autenticación)
 
@@ -104,13 +114,13 @@ app.post('/api/login', async (req, res) => {
 
   try {
 
-    const { correo, clave } = req.body;
+    const { email, clave } = req.body;
 
     
 
     // 1. Buscar al usuario por email
 
-    const usuario = await Usuario.findOne({ correo });
+    const usuario = await Usuario.findOne({ email });
 
     if (!usuario) {
 
@@ -127,17 +137,27 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' }); // Contraseña incorrecta
 
     }
+
+    
+
     // 3. Credenciales válidas: Generar token JWT
+
     const datosToken = { id: usuario._id };            // Podemos incluir datos en el token (p.ej. el ID de usuario)
-    const secreto = process.env.SECRETO;            // Clave secreta para firmar el token (en producción, mantener en una variable de entorno)
+
+    const secreto = 'SECRETO_SUPER_SEGUR0';            // Clave secreta para firmar el token (en producción, mantener en una variable de entorno)
+
     const opciones = { expiresIn: '1h' };              // El token expirará en 1 hora
+
     const token = jwt.sign(datosToken, secreto, opciones);
 
+    
 
     // 4. Enviar el token al cliente
 
     res.json({ token });
+
   } catch (error) {
+
     res.status(500).json({ error: 'Error en el servidor' });
 
   }
@@ -178,21 +198,21 @@ app.post('/api/usuarios', async (req, res) => {
     res.status(400).json({ error: 'Error al crear usuario' }); // Posibles errores de validación
   }
 });
-const AutoClasico = require("./autoClasicoEsquema");
-
-//Registro de carros//
-app.post('/api/auto', async (req, res) => {
+const Camiseta = require("./camisetaEsquema");
+ 
+// Crear un nuevo usuario
+app.post('/api/camisetas', async (req, res) => {
   try {
-    const datosAutoClasico = req.body;          
-    const nuevo = new AutoClasico(datosAutoClasico);  
-    const autoGuardada = await nuevo.save();      
-    res.status(201).json(autoGuardada);    
-    } catch (error) {
-    res.status(400).json({ error: 'Error al regitrar auto clásico' }); 
+    const datosCamiseta = req.body;            // Obtenemos los datos enviados en la petición
+    const nuevo = new Camiseta(datosCamiseta);  // Creamos un nuevo documento Usuario
+    const camisetaGuardada = await nuevo.save();      // Guardamos en la base de datos
+    res.status(201).json(camisetaGuardada);    // Devolvemos el usuario creado con código 201 (Creado)
+  } catch (error) {
+    res.status(400).json({ error: 'Error al crear camiseta' }); // Posibles errores de validación
   }
 });
 
-//actualizar usuarios existentes
+// Actualizar un usuario existente
 app.put('/api/usuarios/:id', async (req, res) => {
   try {
     const datosActualizados = req.body;
@@ -222,115 +242,241 @@ app.delete('/api/usuarios/:id', async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+// =====================================================
+// CRUD DE CAMISETAS
+// Todas las rutas requieren un token válido
+// =====================================================
+ 
+// Obtener las camisetas del usuario autenticado
+app.get('/api/camisetas', verificarToken, async (req, res) => {
+  try {
+    const camisetas = await Camiseta.find({
+      
+    }).sort({ fechaCreacion: -1 });
+ 
+    res.json(camisetas);
+ 
+  } catch (error) {
+    console.error('Error al obtener camisetas:', error);
+ 
+    res.status(500).json({
+      error: 'Error al obtener las camisetas'
+    });
+  }
+});
+ 
+ 
+// Obtener una camiseta específica del usuario
+app.get('/api/camisetas/:id', verificarToken, async (req, res) => {
+  try {
+    const camiseta = await Camiseta.findOne({
+      _id: req.params.id
+    });
+ 
+    if (!camiseta) {
+      return res.status(404).json({
+        error: 'Camiseta no encontrada'
+      });
+    }
+ 
+    res.json(camiseta);
+ 
+  } catch (error) {
+    console.error('Error al obtener camiseta:', error);
+ 
+    res.status(400).json({
+      error: 'Identificador de camiseta inválido'
+    });
+  }
+});
+ 
+ 
+// Crear una nueva camiseta
+app.post('/api/camisetas', verificarToken, async (req, res) => {
+  try {
+    const {
+      torsoColor,
+      mangaIzqColor,
+      mangaDerColor,
+      cuelloColor
+    } = req.body;
+ 
+    const nuevaCamiseta = new Camiseta({
+      creador: req.usuarioId,
+      torsoColor,
+      mangaIzqColor,
+      mangaDerColor,
+      cuelloColor
+    });
+ 
+    const camisetaGuardada = await nuevaCamiseta.save();
+ 
+    res.status(201).json(camisetaGuardada);
+ 
+  } catch (error) {
+    console.error('Error al crear camiseta:', error);
+ 
+    res.status(400).json({
+      error: 'Error al crear la camiseta'
+    });
+  }
+});
+ 
+ 
+// Actualizar una camiseta del usuario autenticado
+app.put('/api/camisetas/:id', verificarToken, async (req, res) => {
+  try {
+    const {
+      torsoColor,
+      mangaIzqColor,
+      mangaDerColor,
+      cuelloColor
+    } = req.body;
+ 
+    const camisetaActualizada = await Camiseta.findOneAndUpdate(
+      {
+        _id: req.params.id
+      },
+      {
+        torsoColor,
+        mangaIzqColor,
+        mangaDerColor,
+        cuelloColor
+      },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+ 
+    if (!camisetaActualizada) {
+      return res.status(404).json({
+        error: 'Camiseta no encontrada'
+      });
+    }
+ 
+    res.json(camisetaActualizada);
+ 
+  } catch (error) {
+    console.error('Error al actualizar camiseta:', error);
+ 
+    res.status(400).json({
+      error: 'Error al actualizar la camiseta'
+    });
+  }
+});
+ 
+ 
+// Eliminar una camiseta del usuario autenticado
+app.delete('/api/camisetas/:id', verificarToken, async (req, res) => {
+  try {
+    const camisetaEliminada = await Camiseta.findOneAndDelete({
+      _id: req.params.id
+    });
+ 
+    if (!camisetaEliminada) {
+      return res.status(404).json({
+        error: 'Camiseta no encontrada'
+      });
+    }
+ 
+    res.json({
+      mensaje: 'Camiseta eliminada correctamente'
+    });
+ 
+  } catch (error) {
+    console.error('Error al eliminar camiseta:', error);
+ 
+    res.status(400).json({
+      error: 'Error al eliminar la camiseta'
+    });
+  }
+});
+// Votar por una camiseta
+app.put('/api/camisetas/:id/votar', verificarToken, async (req, res) => {
+  try {
+    const { voto } = req.body;
+ 
+    // Solo se permite votar +1 o -1
+    if (voto !== 1 && voto !== -1) {
+      return res.status(400).json({
+        error: 'El voto debe ser 1 o -1'
+      });
+    }
+ 
+    const camisetaActualizada = await Camiseta.findByIdAndUpdate(
+      req.params.id,
+      {
+        $inc: {
+          calificacion: voto
+        }
+      },
+      {
+        new: true
+      }
+    );
+ 
+    if (!camisetaActualizada) {
+      return res.status(404).json({
+        error: 'Camiseta no encontrada'
+      });
+    }
+ 
+    res.json({
+      mensaje: 'Voto registrado',
+      calificacion: camisetaActualizada.calificacion,
+      camiseta: camisetaActualizada
+    });
+ 
+  } catch (error) {
+    console.error('Error al votar:', error);
+ 
+    res.status(500).json({
+      error: 'Error al registrar el voto'
+    });
+  }
+});
 
 app.get('/api/usuario-logueado', verificarToken, async (req, res) => {
+
   try {
+
     const usuario = await Usuario.findById(req.usuarioId).select('-clave');
+
+ 
+
     if (!usuario) {
+
       return res.status(404).json({
+
         error: 'Usuario no encontrado'
+
       });
 
     }
+
+ 
+
     res.json(usuario);
+
+ 
+
   } catch (error) {
 
     console.error('Error obteniendo el usuario:', error);
+
+ 
+
     res.status(500).json({
 
       error: 'Error al obtener los datos del usuario'
 
     });
+
   }
+
 });
 
-// =====================================================
-// CRUD DE Autos Clásicos
-// Todas las rutas requieren un token válido
-// =====================================================
-
-
-// Obtener las camisetas del usuario autenticado
-app.get('/api/auto', verificarToken, async (req, res) => {
-  try {
-    const auto = await AutoClasico.find({
-      
-    }).sort({ fechaCreacion: -1 });
- 
-    res.json(auto);
- 
-  } catch (error) {
-    console.error('Error al obtener autos:', error);
- 
-    res.status(500).json({
-      error: 'Error al obtener los autos'
-    });
-  }
-});
-
-app.post('/api/auto', verificarToken, async (req, res) => {
-  try {
-    const {
-      marca, modelo, anio, paisOrigen, tipoCarroceria,
-      estadoConservacion, motor, color, valorEstimado, imagenUrl
-    } = req.body;
- 
-    const nuevoAuto = new AutoClasico({
-      marca,
-      modelo,
-      anio,
-      paisOrigen,
-      tipoCarroceria,
-      estadoConservacion,
-      motor,
-      color,
-      valorEstimado,
-      imagenUrl
-    });
- 
-    const autoGuardado = await nuevoAuto.save();
-    res.status(201).json(autoGuardado);
-  } catch (error) {
-    console.error('Error al registrar el auto:', error);
-    res.status(400).json({ error: 'Error al crear el auto' });
-  }
-});
-
-// Actualizar un auto clásico existente
-app.put('/api/auto/:id', verificarToken, async (req, res) => {
-  try {
-    const datosActualizar = req.body;
- 
-    const autoActualizado = await AutoClasico.findOneAndUpdate(
-      { _id: req.params.id },
-      datosActualizar,
-      { new: true, runValidators: true }
-    );
- 
-    if (!autoActualizado) {
-      return res.status(404).json({ error: 'Auto no encontrado' });
-    }
-    res.json(autoActualizado);
-  } catch (error) {
-    console.error('Error al actualizar el auto:', error);
-    res.status(400).json({ error: 'Error al actualizar el auto' });
-  }
-});
- 
-// Eliminar un auto clásico
-app.delete('/api/auto/:id', verificarToken, async (req, res) => {
-  try {
-    const autoEliminado = await AutoClasico.findOneAndDelete({ _id: req.params.id });
- 
-    if (!autoEliminado) {
-      return res.status(404).json({ error: 'Auto no encontrado' });
-    }
-    res.json({ mensaje: 'Auto eliminado correctamente' });
-  } catch (error) {
-    console.error('Error al eliminar el auto:', error);
-    res.status(400).json({ error: 'Error al eliminar el auto' });
-  }
-});
 
 
 const PORT = process.env.PORT || 3000;
