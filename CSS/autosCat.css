@@ -1,0 +1,148 @@
+
+    * {
+      box-sizing: border-box;
+    }
+ 
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      font-family: Arial, sans-serif;
+      background-color: #f1f3f5;
+    }
+ 
+    h1 {
+      text-align: center;
+      color: #222;
+    }
+
+    
+    nav {
+      padding: 12px 35px;
+      background-color: white;
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.12);
+    }
+ 
+    nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+ 
+    nav a {
+      display: inline-block;
+      padding: 10px 18px;
+      color: #1f2937;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+ 
+    nav a:hover {
+      color: white;
+      background-color: #2563eb;
+    }
+ 
+    .carrusel-contenedor {
+      position: relative;
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 55px;
+    }
+ 
+    .carrusel-ventana {
+      overflow: hidden;
+    }
+ 
+    .carrusel {
+      display: flex;
+      gap: 20px;
+      transition: transform 0.4s ease;
+    }
+ 
+    .tarjeta-auto {
+      flex: 0 0 calc((100% - 40px) / 3);
+      min-width: 0;
+      padding: 20px;
+      text-align: center;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    }
+ 
+
+    .titulo-auto {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+ 
+    .boton-carrusel {
+      position: absolute;
+      top: 50%;
+      z-index: 5;
+      width: 45px;
+      height: 45px;
+      color: white;
+      background-color: #222;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 24px;
+      transform: translateY(-50%);
+    }
+ 
+    .boton-anterior {
+      left: 0;
+    }
+ 
+    .boton-siguiente {
+      right: 0;
+    }
+ 
+    .boton-carrusel:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+ 
+    #mensaje {
+      min-height: 24px;
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+ 
+    .mensaje-correcto {
+      color: #198754;
+    }
+ 
+    .mensaje-error {
+      color: #dc3545;
+    }
+ 
+    .sin-autos {
+      padding: 40px;
+      text-align: center;
+      font-size: 20px;
+      color: #666;
+      background-color: white;
+      border-radius: 10px;
+    }
+ 
+    @media (max-width: 850px) {
+      .tarjeta-auto {
+        flex-basis: calc((100% - 20px) / 2);
+      }
+    }
+ 
+    @media (max-width: 600px) {
+      .carrusel-contenedor {
+        padding: 0 45px;
+      }
+ 
+      .tarjeta-auto {
+        flex-basis: 100%;
+      }
+    }
