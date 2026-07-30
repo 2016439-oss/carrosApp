@@ -224,6 +224,27 @@ app.delete('/api/usuarios/:id', async (req, res) => {
   }
 });
 
+app.get('/api/usuario-logueado', verificarToken, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.usuarioId).select('-clave');
+    if (!usuario) {
+      return res.status(404).json({
+        error: 'Usuario no encontrado'
+      });
+
+    }
+    res.json(usuario);
+  } catch (error) {
+
+    console.error('Error obteniendo el usuario:', error);
+    res.status(500).json({
+
+      error: 'Error al obtener los datos del usuario'
+
+    });
+  }
+});
+
 // =====================================================
 // CRUD DE Autos Clásicos
 // Todas las rutas requieren un token válido
