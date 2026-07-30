@@ -259,10 +259,9 @@
       formData.append('estadoConservacion', document.getElementById('estadoConservacion').value);
       formData.append('valorEstimado', document.getElementById('valorEstimado').value);
       
-      const inputImagen = document.getElementById('imagenUrl');
-      if (inputImagen.files.length > 0) {
-        formData.append('imagen', inputImagen.files[0]); 
-      }
+     
+        formData.append('imagen', "sin imagen"); 
+      
 
       return formData;
     }
@@ -341,19 +340,8 @@
         fila.appendChild(crearCelda(auto.estadoConservacion));
         fila.appendChild(crearCelda('$' + auto.valorEstimado));
 
-        const celdaImagen = document.createElement('td');
-        if (auto.imagenUrl) {
-          const img = document.createElement('img');
-          img.src = auto.imagenUrl;
-          img.alt = auto.modelo;
-          img.style.width = '60px';
-          img.style.height = 'auto';
-          img.style.borderRadius = '4px';
-          celdaImagen.appendChild(img);
-        } else {
-          celdaImagen.textContent = 'Sin foto';
-        }
-        fila.appendChild(celdaImagen);
+    
+        fila.appendChild((crearCelda("sin imagen")));
  
         const celdaAcciones = document.createElement('td');
         const contenedorAcciones = document.createElement('div');
