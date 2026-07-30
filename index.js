@@ -139,7 +139,6 @@ app.post('/api/login', async (req, res) => {
     res.json({ token });
   } catch (error) {
     res.status(500).json({ error: 'Error en el servidor' });
-    console.log(error);
 
   }
 
@@ -269,24 +268,14 @@ app.get('/api/auto', verificarToken, async (req, res) => {
   }
 });
 
-// Crear un nuevo registro de auto clásico 
 app.post('/api/auto', verificarToken, async (req, res) => {
   try {
     const {
-      marca,
-      modelo,
-      anio,
-      paisOrigen,
-      tipoCarroceria,
-      estadoConservacion,
-      motor,
-      color,
-      valorEstimado,
-      imagenUrl
+      marca, modelo, anio, paisOrigen, tipoCarroceria,
+      estadoConservacion, motor, color, valorEstimado, imagenUrl
     } = req.body;
  
     const nuevoAuto = new AutoClasico({
-      creador: req.usuarioId,
       marca,
       modelo,
       anio,
@@ -300,102 +289,49 @@ app.post('/api/auto', verificarToken, async (req, res) => {
     });
  
     const autoGuardado = await nuevoAuto.save();
- 
     res.status(201).json(autoGuardado);
- 
   } catch (error) {
     console.error('Error al registrar el auto:', error);
- 
-    res.status(400).json({
-      error: 'Error al crear el auto'
-    });
+    res.status(400).json({ error: 'Error al crear el auto' });
   }
 });
 
-//actualizar un auto clásico existente
+// Actualizar un auto clásico existente
 app.put('/api/auto/:id', verificarToken, async (req, res) => {
   try {
-    const {
-      marca,
-      modelo,
-      anio,
-      paisOrigen,
-      tipoCarroceria,
-      estadoConservacion,
-      motor,
-      color,
-      valorEstimado,
-      imagenUrl
-    } = req.body;
+    const datosActualizar = req.body;
  
     const autoActualizado = await AutoClasico.findOneAndUpdate(
-      {
-        _id: req.params.id
-        
-      },
-      {
-      marca,
-      modelo,
-      anio,
-      paisOrigen,
-      tipoCarroceria,
-      estadoConservacion,
-      motor,
-      color,
-      valorEstimado,
-      imagenUrl
-        
-      },
-      {
-        new: true,
-        runValidators: true
-      }
+      { _id: req.params.id },
+      datosActualizar,
+      { new: true, runValidators: true }
     );
  
     if (!autoActualizado) {
-      return res.status(404).json({
-        error: 'Auto no encontrada'
-      });
+      return res.status(404).json({ error: 'Auto no encontrado' });
     }
- 
     res.json(autoActualizado);
- 
   } catch (error) {
     console.error('Error al actualizar el auto:', error);
- 
-    res.status(400).json({
-      error: 'Error al actualizar el auto'
-    });
+    res.status(400).json({ error: 'Error al actualizar el auto' });
   }
 });
  
- 
-// Eliminar una camiseta del usuario autenticado
+// Eliminar un auto clásico
 app.delete('/api/auto/:id', verificarToken, async (req, res) => {
   try {
-    const autoEliminado = await AutoClasico.findOneAndDelete({
-      _id: req.params.id
-     
-    });
+    const autoEliminado = await AutoClasico.findOneAndDelete({ _id: req.params.id });
  
     if (!autoEliminado) {
-      return res.status(404).json({
-        error: 'Auto no encontrado'
-      });
+      return res.status(404).json({ error: 'Auto no encontrado' });
     }
- 
-    res.json({
-      mensaje: 'Auto eliminado correctamente'
-    });
- 
+    res.json({ mensaje: 'Auto eliminado correctamente' });
   } catch (error) {
     console.error('Error al eliminar el auto:', error);
- 
-    res.status(400).json({
-      error: 'Error al eliminar el auto'
-    });
+    res.status(400).json({ error: 'Error al eliminar el auto' });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
