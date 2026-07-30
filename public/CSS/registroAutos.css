@@ -9,8 +9,8 @@
     h2 {
       text-align: center;
     }
-
-
+    
+ 
     nav {
       padding: 12px 35px;
       background-color: white;
@@ -39,7 +39,6 @@
       color: white;
       background-color: #2563eb;
     }
- 
     .contenedor-principal {
       max-width: 1100px;
       margin: auto;
